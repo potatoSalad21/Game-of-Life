@@ -11,38 +11,63 @@ const (
 )
 
 var (
-	tileNumX = screenWidth / tileSize
-	tileNumY = screenHeight / tileSize
+	started bool = false
+
+	tileNumX int = screenWidth / tileSize
+	tileNumY int = screenHeight / tileSize
 )
 
-func render() {
+func render(matrix [][]int8) {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.White)
 
-	for row := 0; row <= tileNumX; row++ {
-		for col := 0; col <= tileNumY; col++ {
-			//      -TODO-
-			// store rectangles in a matrix
-			// rectangle state: 0 (black == dead) or 1 (white == alive)
+	if !started {
+		fillBoard(matrix)
+	}
+
+	var color rl.Color
+	for row := 0; row < tileNumY; row++ {
+		for col := 0; col < tileNumX; col++ {
+			if matrix[row][col] == 1 {
+				color = rl.White
+			} else {
+				color = rl.Black
+			}
+
 			rl.DrawRectangle(
 				int32(col*tileSize),
 				int32(row*tileSize),
 				tileSize,
 				tileSize,
-				rl.White)
+				color)
 		}
 	}
 
 	rl.EndDrawing()
 }
 
+func fillBoard(matrix [][]int8) {
+	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+		mouseX := rl.GetMouseX()
+		mouseY := rl.GetMouseY()
+
+		col := mouseX / tileSize
+		row := mouseY / tileSize
+		matrix[row][col] = 1
+	} else if rl.IsKeyPressed(rl.KeySpace) {
+		started = true
+	}
+}
 func main() {
 	rl.InitWindow(screenWidth, screenHeight, "Game of Life")
 	rl.SetTargetFPS(60)
 
-	// TODO: allow users to place blocks in initial state
-	// press a button to begin
+	matrix := make([][]int8, tileNumX)
+	for i, _ := range matrix {
+		matrix[i] = make([]int8, tileNumY)
+	}
+
 	for !rl.WindowShouldClose() {
-		render()
+		render(matrix)
 	}
 }

@@ -55,7 +55,7 @@ func countNeighbors(grid [][]int8, x, y int) int8 {
 	return sum
 }
 
-func render(grid [][]int8) [][]int8 {
+func generate(grid [][]int8, alive, dead rl.Texture2D) [][]int8 {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.White)
 
@@ -67,23 +67,17 @@ func render(grid [][]int8) [][]int8 {
 		nextGrid = newGrid()
 	}
 
-	var color rl.Color
+	var texture rl.Texture2D
 	for row := 0; row < tileNumY; row++ {
 		for col := 0; col < tileNumX; col++ {
 			state := prevGrid[row][col]
 
 			if state == 1 {
-				color = rl.White
+				texture = alive
 			} else {
-				color = rl.Black
+				texture = dead
 			}
-
-			rl.DrawRectangle(
-				int32(col*tileSize),
-				int32(row*tileSize),
-				tileSize,
-				tileSize,
-				color)
+			rl.DrawTexture(texture, int32(col*tileSize), int32(row*tileSize), rl.White)
 
 			if !started {
 				continue
@@ -108,11 +102,17 @@ func main() {
 	rl.InitWindow(screenWidth, screenHeight, "Game of Life")
 	rl.SetTargetFPS(60)
 
+	alive := rl.LoadTexture("./assets/livecell.png")
+	dead := rl.LoadTexture("./assets/deadcell.png")
+
 	grid := newGrid()
 	for !rl.WindowShouldClose() {
 		if !started {
 			fillBoard(grid)
 		}
-		grid = render(grid)
+		grid = generate(grid, alive, dead)
 	}
+
+	defer rl.UnloadTexture(alive)
+	defer rl.UnloadTexture(dead)
 }

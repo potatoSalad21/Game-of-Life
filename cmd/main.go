@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -17,18 +19,56 @@ var (
 	tileNumY int = screenHeight / tileSize
 )
 
-func render(matrix [][]int8) {
+func newGrid() [][]int8 {
+	grid := make([][]int8, tileNumX)
+	for i, _ := range grid {
+		grid[i] = make([]int8, tileNumY)
+	}
+
+	return grid
+}
+
+func fillBoard(grid [][]int8) {
+	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+		mouseX := rl.GetMouseX()
+		mouseY := rl.GetMouseY()
+
+		col := mouseX / tileSize
+		row := mouseY / tileSize
+		grid[row][col] = 1
+	} else if rl.IsKeyPressed(rl.KeySpace) {
+		started = true
+	}
+}
+
+func countNeighbors(grid [][]int8, x, y int) int8 {
+	var sum int8
+
+	for i := -1; i < 2; i++ {
+		for j := -1; j < 2; j++ {
+			col := (x + i + tileNumX) % tileNumX
+			row := (y + j + tileNumY) % tileNumY
+
+			sum += grid[col][row]
+		}
+	}
+	sum -= grid[x][y]
+
+	return sum
+}
+
+func render(grid [][]int8) {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.White)
 
 	if !started {
-		fillBoard(matrix)
+		fillBoard(grid)
 	}
 
 	var color rl.Color
 	for row := 0; row < tileNumY; row++ {
 		for col := 0; col < tileNumX; col++ {
-			if matrix[row][col] == 1 {
+			if grid[row][col] == 1 {
 				color = rl.White
 			} else {
 				color = rl.Black
@@ -40,34 +80,21 @@ func render(matrix [][]int8) {
 				tileSize,
 				tileSize,
 				color)
+
+			sum := countNeighbors(grid, row, col)
+			fmt.Println(sum)
 		}
 	}
 
 	rl.EndDrawing()
 }
 
-func fillBoard(matrix [][]int8) {
-	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
-		mouseX := rl.GetMouseX()
-		mouseY := rl.GetMouseY()
-
-		col := mouseX / tileSize
-		row := mouseY / tileSize
-		matrix[row][col] = 1
-	} else if rl.IsKeyPressed(rl.KeySpace) {
-		started = true
-	}
-}
 func main() {
 	rl.InitWindow(screenWidth, screenHeight, "Game of Life")
 	rl.SetTargetFPS(60)
 
-	matrix := make([][]int8, tileNumX)
-	for i, _ := range matrix {
-		matrix[i] = make([]int8, tileNumY)
-	}
-
+	grid := newGrid()
 	for !rl.WindowShouldClose() {
-		render(matrix)
+		render(grid)
 	}
 }

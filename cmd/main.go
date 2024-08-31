@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -57,18 +55,24 @@ func countNeighbors(grid [][]int8, x, y int) int8 {
 	return sum
 }
 
-func render(grid [][]int8) {
+func render(grid [][]int8) [][]int8 {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.White)
 
+	prevGrid := grid
+	var nextGrid [][]int8
 	if !started {
-		fillBoard(grid)
+		nextGrid = grid
+	} else {
+		nextGrid = newGrid()
 	}
 
 	var color rl.Color
 	for row := 0; row < tileNumY; row++ {
 		for col := 0; col < tileNumX; col++ {
-			if grid[row][col] == 1 {
+			state := prevGrid[row][col]
+
+			if state == 1 {
 				color = rl.White
 			} else {
 				color = rl.Black
@@ -81,12 +85,23 @@ func render(grid [][]int8) {
 				tileSize,
 				color)
 
-			sum := countNeighbors(grid, row, col)
-			fmt.Println(sum)
+			if !started {
+				continue
+			}
+
+			sum := countNeighbors(prevGrid, row, col)
+			if state == 0 && sum == 3 {
+				nextGrid[row][col] = 1
+			} else if state == 1 && (sum < 2 || sum > 3) {
+				nextGrid[row][col] = 0
+			} else {
+				nextGrid[row][col] = state
+			}
 		}
 	}
 
 	rl.EndDrawing()
+	return nextGrid
 }
 
 func main() {
@@ -95,6 +110,9 @@ func main() {
 
 	grid := newGrid()
 	for !rl.WindowShouldClose() {
-		render(grid)
+		if !started {
+			fillBoard(grid)
+		}
+		grid = render(grid)
 	}
 }
